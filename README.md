@@ -53,6 +53,11 @@ To generate the icons for the project run:
 cargo tauri icon public/icon-gen.png
 ```
 
+### WARNING
+
+AutoWallet is in active development, please only use testnet funds, or if using mainnet, small amounts!
+
+
 ### Network
 
 -   Connecting to a network isn't required at the moment to run the app, but you can run a local testnet:
