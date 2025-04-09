@@ -4,6 +4,8 @@
 
 ## Getting Started
 
+Wiki coming soon on all the features!
+
 ### Developers
 
 -   System libraries and Rust: https://v2.tauri.app/start/prerequisites/
