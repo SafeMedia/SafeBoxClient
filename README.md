@@ -1,5 +1,7 @@
 # AutoWallet
 
+![autowallet](https://github.com/user-attachments/assets/770de361-fe9a-4196-9197-203e8abfdd73)
+
 ## Getting Started
 
 ### Developers
@@ -7,8 +9,6 @@
 -   System libraries and Rust: https://v2.tauri.app/start/prerequisites/
 
 -   Download Rust dependencies.
-
-Edit `src-tauri/Cargo.toml` and provide path to _safe_ lib in `[dependencies]` section. Please, do not commit this change back to the repo. Refer to _safe_'s documentation on what are the further prerequisites.
 
 ### Frontend
 
