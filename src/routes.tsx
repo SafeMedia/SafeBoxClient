@@ -6,11 +6,13 @@ import StorageSettings from "./components/settings/storage-settings";
 import NotificationSettings from "./components/settings/notification-settings";
 import PreferenceSettings from "./components/settings/preference-settings";
 import NetworkSettings from "./components/settings/network-settings";
+import Examples from "./components/examples";
 
 const AppRoutes = () => {
     return (
         <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/examples" element={<Examples />} />
             <Route path="/settings/*" element={<Settings />}>
                 <Route path="status" element={<StatusSettings />} />
                 <Route path="storage" element={<StorageSettings />} />

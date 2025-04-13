@@ -1,4 +1,9 @@
-import { Settings, LayoutGrid, LucideIcon } from "lucide-react";
+import {
+    Settings,
+    LayoutGrid,
+    LucideIcon,
+    TestTubeDiagonal,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 type Submenu = {
@@ -32,6 +37,12 @@ export function getMenuList(_pathname: string): Group[] {
                     href: "/",
                     label: t("dashboard"),
                     icon: LayoutGrid,
+                    submenus: [],
+                },
+                {
+                    href: "/examples",
+                    label: t("examples"),
+                    icon: TestTubeDiagonal,
                     submenus: [],
                 },
             ],
