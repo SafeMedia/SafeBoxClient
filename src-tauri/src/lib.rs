@@ -505,8 +505,6 @@ async fn download(
         .download(xorname)
         .await?;
 
-    //let size = data.len();
-
     let mut path = PathBuf::from(&destination);
 
     let (file_stem, extension) = if let Some(ref name) = file_name {
