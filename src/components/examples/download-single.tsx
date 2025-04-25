@@ -22,7 +22,6 @@ export default function DownloadSingle() {
         try {
             await download(xorname, xorname);
         } catch (error) {
-            console.error("Download failed:", error);
             toast("Download Failed", {
                 description: `Failed to download: ${xorname}`,
             });

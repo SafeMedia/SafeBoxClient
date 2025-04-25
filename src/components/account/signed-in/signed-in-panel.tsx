@@ -65,7 +65,6 @@ const SignedInPanel: React.FC<SignedInPanelProps> = ({ account }) => {
                     className="ml-2 flex cursor-pointer items-center transition"
                     onClick={() => {
                         if (account) {
-                            console.log(account.address);
                             copyToClipboard(account.address);
                         }
                     }}

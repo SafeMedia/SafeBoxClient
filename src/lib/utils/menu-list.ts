@@ -49,6 +49,10 @@ export function getMenuList(_pathname: string): Group[] {
                             href: "download-single",
                             label: t("downloadSingle"),
                         },
+                        {
+                            href: "upload-single",
+                            label: t("uploadSingle"),
+                        },
                     ],
                 },
             ],

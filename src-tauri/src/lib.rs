@@ -539,6 +539,33 @@ async fn download(
     })
 }
 
+#[tauri::command]
+async fn upload(
+    file: String, // file path
+    app: AppHandle,
+) -> Result<String, Error> {
+    let path = PathBuf::from(file);
+    let data = fs::read(&path)
+        .map_err(|e| Error::Common(format!("File {} is not readable: {}", path.display(), e)))?;
+    put_data(data, app).await
+}
+
+// returns hex-encoded xorname
+#[tauri::command]
+async fn put_data(data: Vec<u8>, app: AppHandle) -> Result<String, Error> {
+    let data_address = app
+        .try_state::<Mutex<Option<Safe>>>()
+        .ok_or(Error::NotConnected)?
+        .lock()
+        .await
+        .as_mut()
+        .ok_or(Error::NotConnected)? // safe
+        .upload(&data)
+        .await?;
+
+    Ok(hex::encode(data_address))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -567,6 +594,8 @@ pub fn run() {
             check_key,
             delete_account,
             download,
+            upload,
+            put_data,
         ])
         .setup(|app| {
             #[cfg(target_os = "linux")]
