@@ -39,11 +39,17 @@ export function getMenuList(_pathname: string): Group[] {
                     icon: LayoutGrid,
                     submenus: [],
                 },
+
                 {
-                    href: "/examples",
+                    href: "",
                     label: t("examples"),
                     icon: TestTubeDiagonal,
-                    submenus: [],
+                    submenus: [
+                        {
+                            href: "download-single",
+                            label: t("downloadSingle"),
+                        },
+                    ],
                 },
             ],
         },
