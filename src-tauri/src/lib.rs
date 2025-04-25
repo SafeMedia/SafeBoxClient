@@ -1,6 +1,7 @@
 use futures::lock::Mutex;
 use safeapi::{Multiaddr, Safe, SecretKey, XorName, XorNameBuilder};
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 use std::{fs, path::PathBuf};
 use tauri::{AppHandle, Emitter, Manager, State};
 
@@ -530,6 +531,14 @@ async fn download(
     fs::write(&path, data)
         .map_err(|_| Error::Common(format!("Could not save file: {}", path.display())))?;
 
+    let final_path = rename_with_extension(&path)
+        .map_err(|e| Error::Common(format!("Failed to rename file: {}", e)))?;
+
+    let extension = final_path
+        .extension()
+        .map(|s| s.to_string_lossy().to_string())
+        .or(extension); // fallback to previous extension
+
     Ok(AutonomiFileMetadata {
         folder_path: Some(destination),
         file_name: file_stem,
@@ -537,6 +546,27 @@ async fn download(
         xorname: Some(xorname),
         size: Some(size),
     })
+}
+
+fn rename_with_extension<P: AsRef<Path>>(file_path: P) -> std::io::Result<PathBuf> {
+    let old_path = file_path.as_ref();
+
+    if let Some((_, ext)) = detect_file_type(old_path) {
+        let new_path = old_path.with_extension(ext);
+        fs::rename(old_path, &new_path)?;
+        println!("Renamed to: {}", new_path.display());
+        Ok(new_path)
+    } else {
+        println!("Could not determine extension to rename.");
+        Ok(old_path.to_path_buf())
+    }
+}
+
+fn detect_file_type<P: AsRef<Path>>(file_path: P) -> Option<(String, String)> {
+    let data = fs::read(&file_path).ok()?;
+
+    let info = infer::get(&data)?;
+    Some((info.mime_type().to_string(), info.extension().to_string()))
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
