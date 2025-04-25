@@ -1,5 +1,5 @@
 use futures::lock::Mutex;
-use safeapi::{Multiaddr, Safe, SecretKey, XorNameBuilder};
+use safeapi::{Multiaddr, Safe, SecretKey, XorName, XorNameBuilder};
 use serde::{Deserialize, Serialize};
 use std::{fs, path::PathBuf};
 use tauri::{AppHandle, Emitter, Manager, State};
@@ -482,6 +482,63 @@ fn delete_account(login: String, mut app: AppHandle) -> Result<(), Error> {
     Ok(())
 }
 
+#[tauri::command]
+async fn download(
+    xorname: String,
+    file_name: Option<String>, // name with extension
+    destination: String,       // directory to download to
+    app: AppHandle,
+) -> Result<AutonomiFileMetadata, Error> {
+    let xorname_bytes: [u8; 32] = hex::decode(xorname)
+        .map_err(|e| Error::Common(format!("Invalid xorname: {}", e)))?[0..32]
+        .try_into()
+        .unwrap();
+    let xorname = XorName(xorname_bytes);
+
+    let data = app
+        .try_state::<Mutex<Option<Safe>>>()
+        .ok_or(Error::NotConnected)?
+        .lock()
+        .await
+        .as_mut()
+        .ok_or(Error::NotConnected)?
+        .download(xorname)
+        .await?;
+
+    let mut path = PathBuf::from(&destination);
+
+    let (file_stem, extension) = if let Some(ref name) = file_name {
+        let name_path = PathBuf::from(name);
+        let stem = name_path
+            .file_stem()
+            .map(|s| s.to_string_lossy().to_string())
+            .unwrap_or_else(|| "downloaded_file".into());
+        let ext = name_path
+            .extension()
+            .map(|s| s.to_string_lossy().to_string())
+            .unwrap_or_else(|| "autonomi".into());
+        path.push(name);
+        (Some(stem), Some(ext))
+    } else {
+        let generated_name = format!("{:x}.autonomi", &xorname);
+        path.push(&generated_name);
+        (Some(generated_name.clone()), Some("autonomi".into()))
+    };
+
+    let size = data.len() as u32;
+
+    fs::write(&path, data)
+        .map_err(|_| Error::Common(format!("Could not save file: {}", path.display())))?;
+
+    Ok(AutonomiFileMetadata {
+        folder_path: Some(destination),
+        file_name: file_stem,
+        extension,
+        xorname: Some(xorname),
+        size: Some(size),
+    })
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -509,6 +566,7 @@ pub fn run() {
             gas_balance,
             check_key,
             delete_account,
+            download,
         ])
         .setup(|app| {
             #[cfg(target_os = "linux")]

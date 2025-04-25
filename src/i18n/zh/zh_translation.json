@@ -27,6 +27,8 @@
     "settings": "Settings",
     "other": "Other",
     "dashboard": "Dashboard",
+    "examples": "Examples",
+    "downloadSingle": "Download Single",
     "yourTextIsNowReadyForPasting": "Your text is now ready for pasting.",
     "textCopied": "Text Copied",
     "privatetKeyMustBeAtLeastCharacters": "Private key must be at least {{count}} characters.",
