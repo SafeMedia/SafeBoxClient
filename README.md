@@ -1,4 +1,4 @@
-# AutoWallet
+# AutoWallet - Autonomi Application Framework
 
 <img width="1106" alt="autowallet-promo-light" src="https://github.com/user-attachments/assets/0e7087df-5036-4f06-b011-a6635a11cdd2" />
 
