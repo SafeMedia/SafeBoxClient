@@ -1,6 +1,6 @@
 # AutoWallet
 
-<img width="1106" alt="autowallet-promo-light" src="https://github.com/user-attachments/assets/2240fd9d-78e7-4fd1-b438-d1c6289c5d17" />
+<img width="1106" alt="autowallet-promo-light" src="https://github.com/user-attachments/assets/0e7087df-5036-4f06-b011-a6635a11cdd2" />
 
 ## Getting Started
 
