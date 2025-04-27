@@ -573,6 +573,7 @@ async fn put_data(data: Vec<u8>, app: AppHandle) -> Result<String, Error> {
         .await?;
 
     Ok(hex::encode(data_address))
+}
 
 fn rename_with_extension<P: AsRef<Path>>(file_path: P) -> std::io::Result<PathBuf> {
     let old_path = file_path.as_ref();
