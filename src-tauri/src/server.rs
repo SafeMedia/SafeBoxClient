@@ -1,47 +1,85 @@
-use safeapi::XorName;
+use crate::helpers::is_valid_xorname;
+use futures::stream::TryStreamExt;
+use futures::StreamExt;
+use std::collections::HashMap;
+use std::convert::Infallible;
 use std::path::PathBuf;
-use tauri::path::BaseDirectory;
-use tauri::AppHandle;
-use tauri::Manager;
-use warp::{http::Response, Filter};
+use tauri::Emitter;
+use warp::multipart::{FormData, Part};
+use warp::{http::StatusCode, reply::Reply, Filter};
 
-pub(crate) fn autonomi(path: &str) -> Result<(XorName, PathBuf), String> {
-    // e.g. 08dbb205f5a5712e48551c0e437f07be304a5daadf20e07e8307e7f564fa9962__BegBlag.mp3
-    let filename = path.get(66..).ok_or(String::from("Error parsing URL"))?;
-    let address = path.get(..64).ok_or(String::from("Error parsing URL"))?;
-    println!("{address}");
-    let xorname_bytes: [u8; 32] = hex::decode(address)
-        .map_err(|e| format!("Invalid xorname: {}", e))?[0..32]
-        .try_into()
-        .unwrap();
-    let xorname = XorName(xorname_bytes);
+pub async fn run(handle: tauri::AppHandle) {
+    let download_handle = handle.clone();
+    let upload_handle = handle.clone();
 
-    println!("{} : {}", xorname, filename);
-    println!("{:?} : {}", xorname, filename);
-    println!("{:x} : {}", xorname, filename);
-    Ok((xorname, String::from(filename).into()))
-}
-
-fn data(path: String, app: &AppHandle) -> Result<Vec<u8>, String> {
-    let path_decoded = serde_urlencoded::from_str::<Vec<(String, String)>>(&path)
-        .map_err(|_e| "Not properly urlencoded path.".to_string())?;
-    let path_decoded = &path_decoded
-        .first()
-        .ok_or("Urlencoded path is empty.".to_string())?
-        .0;
-
-    println!("DATA PATH {:?}", path);
-    println!("DATA PATH {:?}", path_decoded);
-    std::fs::read(path_decoded).or(Err("Error reading file".to_string()))
-}
-
-pub fn run(app: AppHandle) {
-    tauri::async_runtime::spawn(async {
-        warp::serve(warp::path::param::<String>().map(move |path: String| {
-            //            let _ = autonomi(&path).inspect_err(|e| println!("Error: {e}"));
-            Response::new(data(path, &app).unwrap())
-        }))
-        .run(([127, 0, 0, 1], 12345))
-        .await;
+    let xorname_param = warp::query::<HashMap<String, String>>().and_then({
+        // let handle = handle.clone();
+        move |params: HashMap<String, String>| {
+            let handle = download_handle.clone();
+            async move {
+                if let Some(xorname) = params.get("xorname") {
+                    if is_valid_xorname(xorname) {
+                        let _ = handle.emit("download-file", xorname.to_string());
+                        Ok::<_, warp::Rejection>(Box::new(warp::reply::json(&serde_json::json!({
+                            "message": "Download triggered"
+                        }))) as Box<dyn Reply>)
+                    } else {
+                        Ok(Box::new(warp::reply::json(&serde_json::json!({
+                            "error": "Invalid xorname"
+                        }))) as Box<dyn Reply>)
+                    }
+                } else {
+                    Ok(Box::new(warp::reply::json(&serde_json::json!({
+                        "error": "Missing xorname parameter"
+                    }))) as Box<dyn Reply>)
+                }
+            }
+        }
     });
+
+    let download_route = warp::path("download-file").and(xorname_param);
+
+    let upload_route = warp::path("upload-file")
+        .and(warp::post())
+        .and(warp::multipart::form().max_length(8_000_000)) // Adjust max length as needed
+        .and(with_upload_handle(upload_handle))
+        .and_then(upload_handler);
+
+    fn with_upload_handle(
+        handle: tauri::AppHandle,
+    ) -> impl Filter<Extract = (tauri::AppHandle,), Error = std::convert::Infallible> + Clone {
+        warp::any().map(move || handle.clone())
+    }
+
+    async fn upload_handler(
+        form: FormData,
+        handle: tauri::AppHandle,
+    ) -> Result<impl warp::Reply, Infallible> {
+        let mut parts = form;
+
+        while let Some(result) = parts.next().await {
+            match result {
+                Ok(part) => {
+                    let filename = part.filename().unwrap_or("photo.png");
+                    let filepath = format!("uploads/{}", filename);
+                    println!("Got file: {}", filepath);
+                    let _ = handle.emit("upload-file", filename);
+
+                    // You can handle saving here
+                }
+                Err(e) => {
+                    eprintln!("Error processing part: {}", e);
+                }
+            }
+        }
+
+        Ok(warp::reply::json(&serde_json::json!({
+            "message": "Upload triggered"
+        })))
+    }
+
+    // combine both routes
+    let routes = download_route.or(upload_route);
+
+    warp::serve(routes).run(([127, 0, 0, 1], 1420)).await;
 }

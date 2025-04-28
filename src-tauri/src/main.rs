@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    autowallet_lib::run()
+    safeboxclient_lib::run()
 }

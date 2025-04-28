@@ -5,7 +5,7 @@ import { invoke } from "@tauri-apps/api/core";
 // Just basic types allowed and types, that correspond to Rust types.
 // =======
 
-const REG_META_PREFIX = "autowallet";
+const REG_META_PREFIX = "safeboxclient";
 
 enum LogLevel {
     TRACE,

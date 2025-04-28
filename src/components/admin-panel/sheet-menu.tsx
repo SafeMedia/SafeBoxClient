@@ -33,7 +33,7 @@ export function SheetMenu() {
                             className="flex items-center gap-2"
                         >
                             <SheetTitle className="font-bold text-lg">
-                                AutoWallet
+                                SafeBox Client
                             </SheetTitle>
                         </Link>
                     </Button>

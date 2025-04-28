@@ -55,8 +55,7 @@ cargo tauri icon public/icon-gen.png
 
 ### WARNING
 
-AutoWallet is in active development, please only use testnet funds, or if using mainnet, small amounts!
-
+SafeBox Client is in active development, please only use testnet funds, or if using mainnet, small amounts!
 
 ### Network
 

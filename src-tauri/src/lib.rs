@@ -5,9 +5,11 @@ use std::{fs, path::PathBuf};
 use tauri::{AppHandle, Emitter, Manager, State};
 
 mod frontend;
+mod helpers;
+mod server;
 
 #[cfg(target_os = "linux")]
-mod server;
+mod linux;
 
 use frontend::*;
 
@@ -511,8 +513,7 @@ pub fn run() {
             delete_account,
         ])
         .setup(|app| {
-            #[cfg(target_os = "linux")]
-            server::run(app.handle().clone());
+            tauri::async_runtime::spawn(server::run(app.handle().clone()));
             Ok(())
         })
         .run(tauri::generate_context!())

@@ -1,6 +1,6 @@
 {
-  "name": "autowallet",
-  "version": "0.1.1",
+  "name": "safeboxclient",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {

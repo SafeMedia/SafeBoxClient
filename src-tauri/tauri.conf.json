@@ -1,18 +1,18 @@
 {
   "$schema": "https://schema.tauri.app/config/2.0.0-rc",
-  "productName": "AutoWallet",
+  "productName": "SafeBoxClient",
   "version": "0.1.1",
-  "identifier": "community.autowallet.desktop",
+  "identifier": "client.safebox.desktop",
   "build": {
     "frontendDist": "../dist",
-    "devUrl": "http://localhost:1420",
+    "devUrl": "http://localhost:3000",
     "beforeDevCommand": "yarn dev",
     "beforeBuildCommand": "yarn build"
   },
   "app": {
     "windows": [
       {
-        "title": "AutoWallet",
+        "title": "SafeBox Client",
         "width": 1100,
         "height": 600,
         "resizable": true,
