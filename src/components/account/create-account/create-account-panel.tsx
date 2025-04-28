@@ -139,7 +139,6 @@ const CreateAccountPanel: React.FC<CreateAccountPanelProps> = ({
     const [isLoading, setIsLoading] = useState(false);
 
     const onSubmit = async (data: CreateAccountFormData) => {
-        console.log(data.username);
         if (!isUsernameValid(data.username)) {
             return;
         }
@@ -180,10 +179,6 @@ const CreateAccountPanel: React.FC<CreateAccountPanelProps> = ({
                 toast("Sign In Error", { description: "Sign-in failed:" });
             }
         } catch (error) {
-            console.log("Register Error", {
-                description: "Registration or Sign-in failed:",
-                error,
-            });
             toast("Register Error", {
                 description: "Registration failed. Please try again",
             });

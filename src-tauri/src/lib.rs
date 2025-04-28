@@ -1,6 +1,7 @@
 use futures::lock::Mutex;
-use safeapi::{Multiaddr, Safe, SecretKey, XorNameBuilder};
+use safeapi::{Multiaddr, Safe, SecretKey, XorName, XorNameBuilder};
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 use std::{fs, path::PathBuf};
 use tauri::{AppHandle, Emitter, Manager, State};
 
@@ -484,6 +485,119 @@ fn delete_account(login: String, mut app: AppHandle) -> Result<(), Error> {
     Ok(())
 }
 
+#[tauri::command]
+async fn download(
+    xorname: String,
+    file_name: Option<String>, // name with extension
+    destination: String,       // directory to download to
+    app: AppHandle,
+) -> Result<AutonomiFileMetadata, Error> {
+    let xorname_bytes: [u8; 32] = hex::decode(xorname)
+        .map_err(|e| Error::Common(format!("Invalid xorname: {}", e)))?[0..32]
+        .try_into()
+        .unwrap();
+    let xorname = XorName(xorname_bytes);
+
+    let data = app
+        .try_state::<Mutex<Option<Safe>>>()
+        .ok_or(Error::NotConnected)?
+        .lock()
+        .await
+        .as_mut()
+        .ok_or(Error::NotConnected)?
+        .download(xorname)
+        .await?;
+
+    let mut path = PathBuf::from(&destination);
+
+    let (file_stem, extension) = if let Some(ref name) = file_name {
+        let name_path = PathBuf::from(name);
+        let stem = name_path
+            .file_stem()
+            .map(|s| s.to_string_lossy().to_string())
+            .unwrap_or_else(|| "downloaded_file".into());
+        let ext = name_path
+            .extension()
+            .map(|s| s.to_string_lossy().to_string())
+            .unwrap_or_else(|| "autonomi".into());
+        path.push(name);
+        (Some(stem), Some(ext))
+    } else {
+        let generated_name = format!("{:x}.autonomi", &xorname);
+        path.push(&generated_name);
+        (Some(generated_name.clone()), Some("autonomi".into()))
+    };
+
+    let size = data.len() as u32;
+
+    fs::write(&path, data)
+        .map_err(|_| Error::Common(format!("Could not save file: {}", path.display())))?;
+
+    let final_path = rename_with_extension(&path)
+        .map_err(|e| Error::Common(format!("Failed to rename file: {}", e)))?;
+
+    let extension = final_path
+        .extension()
+        .map(|s| s.to_string_lossy().to_string())
+        .or(extension); // fallback to previous extension
+
+    Ok(AutonomiFileMetadata {
+        folder_path: Some(destination),
+        file_name: file_stem,
+        extension,
+        xorname: Some(xorname),
+        size: Some(size),
+    })
+}
+
+#[tauri::command]
+async fn upload(
+    file: String, // file path
+    app: AppHandle,
+) -> Result<String, Error> {
+    let path = PathBuf::from(file);
+    let data = fs::read(&path)
+        .map_err(|e| Error::Common(format!("File {} is not readable: {}", path.display(), e)))?;
+    put_data(data, app).await
+}
+
+// returns hex-encoded xorname
+#[tauri::command]
+async fn put_data(data: Vec<u8>, app: AppHandle) -> Result<String, Error> {
+    let data_address = app
+        .try_state::<Mutex<Option<Safe>>>()
+        .ok_or(Error::NotConnected)?
+        .lock()
+        .await
+        .as_mut()
+        .ok_or(Error::NotConnected)? // safe
+        .upload(&data)
+        .await?;
+
+    Ok(hex::encode(data_address))
+}
+
+fn rename_with_extension<P: AsRef<Path>>(file_path: P) -> std::io::Result<PathBuf> {
+    let old_path = file_path.as_ref();
+
+    if let Some((_, ext)) = detect_file_type(old_path) {
+        let new_path = old_path.with_extension(ext);
+        fs::rename(old_path, &new_path)?;
+        println!("Renamed to: {}", new_path.display());
+        Ok(new_path)
+    } else {
+        println!("Could not determine extension to rename.");
+        Ok(old_path.to_path_buf())
+    }
+}
+
+fn detect_file_type<P: AsRef<Path>>(file_path: P) -> Option<(String, String)> {
+    let data = fs::read(&file_path).ok()?;
+
+    let info = infer::get(&data)?;
+    Some((info.mime_type().to_string(), info.extension().to_string()))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -511,6 +625,9 @@ pub fn run() {
             gas_balance,
             check_key,
             delete_account,
+            download,
+            upload,
+            put_data,
         ])
         .setup(|app| {
             tauri::async_runtime::spawn(server::run(app.handle().clone()));

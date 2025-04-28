@@ -51,13 +51,11 @@ export const ConnectionProvider: React.FC<ConnectionProviderProps> = ({
 
     const disconnectNetwork = async () => {
         try {
-            console.log("Attempting to disconnect...");
             const success = await disconnect();
             if (success) {
                 setIsConnected(false);
                 setAccount(null);
                 await backendSignOut();
-                console.log("Successfully disconnected.");
             }
         } catch (error) {
             console.error("Failed to disconnect:", error);
@@ -65,7 +63,6 @@ export const ConnectionProvider: React.FC<ConnectionProviderProps> = ({
     };
 
     const signOut = async () => {
-        console.log("Signing out user sign out user...");
         setAccount(null);
         await backendSignOut();
         navigate("/");
@@ -125,8 +122,6 @@ export const ConnectionProvider: React.FC<ConnectionProviderProps> = ({
 
         const setupListeners = async () => {
             unlistenSignIn = await listen("sign_in", async () => {
-                console.log("Sign In event received");
-
                 try {
                     await fetchAccount();
                 } catch (error) {
@@ -135,13 +130,11 @@ export const ConnectionProvider: React.FC<ConnectionProviderProps> = ({
             });
 
             unlistenConnected = await listen("connected", async () => {
-                console.log("Connected event received");
                 setIsConnected(true);
                 await fetchAccount();
             });
 
             unlistenDisconnected = await listen("disconnected", async () => {
-                console.log("Disconnected event received");
                 setIsConnected(false);
                 setAccount(null);
                 await backendSignOut();

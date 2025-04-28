@@ -1,7 +1,5 @@
 # SafeBox Client
 
-![autowallet](https://github.com/user-attachments/assets/770de361-fe9a-4196-9197-203e8abfdd73)
-
 ## Getting Started
 
 Wiki coming soon on all the features!
